@@ -4,10 +4,6 @@ import perlin
 
 secret_rainbow_flag = False
 
-screen = pygame.display.set_mode((512, 512), pygame.SRCALPHA, 32)
-rect_surface = pygame.Surface((screen.get_width(), screen.get_height()), pygame.SRCALPHA, 32)
-perlin_surface = pygame.Surface((screen.get_width(), screen.get_height()), pygame.SRCALPHA, 32)
-
 letter_to_number = {
 	"a": 1,
 	"b": 2,
@@ -77,15 +73,11 @@ def generate_similar_color(hsla, random_function):
 	color = pygame.Color(0)
 	light_change = random_function(-15, 15)
 	hue_change = random_function(-12, 12)
-	hue, sat, light, alpha = hsla
-	while True:
-		try:
-			color.hsla = hue + hue_change, sat, light + light_change, alpha
-		except ValueError:
-			hue_change = -hue_change // 4
-			brightness_change = -light_change // 4
-			continue
-		break
+	color = generate_neighbor_color(hsla, hue_change)
+	h, s, l, a = color.hsla
+	if l + light_change < 0 or l + light_change > 100:
+		light_change = -light_change
+	color.hsla = h, s, l + light_change, a
 	return color
 
 
@@ -113,7 +105,7 @@ def complementary_color(hsla):
 	return color
 
 
-def generate_rects(random_int_from_name, random_int_from_fav_thing, random_int_from_color):
+def generate_rects(screen, random_int_from_name, random_int_from_fav_thing, random_int_from_color):
 	# create list of rectangles
 	# generate rectangles in quadrants
 	quadrants = [
@@ -138,7 +130,7 @@ def generate_rects(random_int_from_name, random_int_from_fav_thing, random_int_f
 	return rects
 
 
-def generate_perlin(random_int_from_fav_thing, random_int_from_name):
+def generate_perlin(screen, random_int_from_fav_thing, random_int_from_name):
 	# perlin noise for squiggles
 	perlin.random.seed(random_int_from_fav_thing(2, 5) + random_int_from_name(3, 7))
 	x_noise = perlin.PerlinNoiseFactory(1, octaves=5)
@@ -205,7 +197,11 @@ def draw_lines(points, surface, color, random_int_from_name):
 
 
 def main(name, age, favorite_thing, favorite_color):
-	# secret flags
+	pygame.init()
+	screen = pygame.display.set_mode((512, 512), pygame.SRCALPHA, 32)
+	rect_surface = pygame.Surface((screen.get_width(), screen.get_height()), pygame.SRCALPHA, 32)
+	perlin_surface = pygame.Surface((screen.get_width(), screen.get_height()), pygame.SRCALPHA, 32)
+
 	name = name.lower()
 	favorite_thing = favorite_thing.lower()
 	favorite_color = favorite_color.lower()
@@ -221,14 +217,14 @@ def main(name, age, favorite_thing, favorite_color):
 
 	if favorite_color in pygame.color.THECOLORS:
 		main_color = pygame.Color(favorite_color)
-	elif favorite_color == "rainbow" or favorite_color == "random":
+	elif favorite_color == "rainbow" or favorite_color == "random" or favorite_color == "rainbows":
 		main_color = pygame.Color("cyan")
 		secret_rainbow_flag = True
 	else:
 		main_color = generate_random_color(random_int_from_color)
 
-	rects = generate_rects(random_int_from_name, random_int_from_color, random_int_from_fav_thing)
-	perlin = generate_perlin(random_int_from_fav_thing, random_int_from_name)
+	rects = generate_rects(screen, random_int_from_name, random_int_from_color, random_int_from_fav_thing)
+	perlin = generate_perlin(screen, random_int_from_fav_thing, random_int_from_name)
 
 	# draw the squiggles
 	for points in perlin:
@@ -249,3 +245,5 @@ def main(name, age, favorite_thing, favorite_color):
 				running = False
 			if event.type == pygame.MOUSEBUTTONDOWN:
 				running = False
+
+	pygame.quit()

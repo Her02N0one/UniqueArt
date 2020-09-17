@@ -25,6 +25,7 @@ def submit():
 
 	main.main(name, age, fav_thing, fav_color)
 
+
 name_label = tk.Label(root, text='Name', font=('calibre', 10, 'bold'))
 name_entry = tk.Entry(root, textvariable=name_var, font=('calibre', 10, 'normal'))
 
